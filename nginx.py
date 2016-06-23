@@ -19,11 +19,13 @@ def NginxParse(s='lapp/nginx/file/site-enable_dir/'):
     UpstreamListDict, ServerListDict = [], []
     UpstreamStartFlag, UpstreamEndFlag = False, False
     upstream_name, upstream_servers = '', ''
-    ServerStartFlag, ServerEndFlag, LocationStartFlag, LocationEndFlag = False, False, False, False
-    server_name, proxy_pass_name = '', ''
-    # for nginx_file in [x for x in os.listdir(s) if os.path.isfile(os.path.join(s, x))]:
-    for nginx_file in ['bbs.91syt.com.conf']:
+    ServerStartFlag, ServerEndFlag, LocationStartFlag, LocationEndFlag = False, True, False, True
+    server_name, location_name, backend_name = '', '', ''
+    for nginx_file in [x for x in os.listdir(s) if os.path.isfile(os.path.join(s, x))]:
+    # for nginx_file in ['bbs.91syt.com.conf']:
         for line in open(os.path.join(s, nginx_file), 'r').readlines():
+            if re.match(r'^ *#.*', line):       # Ignore comment line
+                continue
             if re.match(r'^ *upstream', line):
                 UpstreamStartFlag = True
                 m = re.search(r'^ *upstream +(.*) {', line)
@@ -38,24 +40,54 @@ def NginxParse(s='lapp/nginx/file/site-enable_dir/'):
                 UpstreamListDict.append({"upstream_name": upstream_name,
                     "upstream_servers": upstream_servers[:-1]})
                 upstream_name, upstream_servers = '', ''
-            if re.match(r'server {' ,line):
+            # above upstream parser;below server parser
+            if ServerStartFlag == False and ServerEndFlag == True \
+                and LocationEndFlag == True and LocationStartFlag == False \
+                and re.match(r'server {' ,line):
                 ServerStartFlag = True
-                print(line, end='')
-            elif ServerStartFlag == True and ServerEndFlag == False \
+            elif ServerStartFlag == True and ServerEndFlag == True \
+                and LocationEndFlag == True and LocationStartFlag == False \
                 and re.match(r'^ *server_name .*;', line):
-                print(line, end='')
-            elif ServerStartFlag == True and ServerEndFlag == False \
-                and re.match(r'^ *proxy_pass .*;', line):
-                print(line, end='')
-            elif ServerStartFlag == True and ServerEndFlag == False \
+                m = re.search(r'^ *server_name +(.*);', line)
+                server_name = m.group(1)
+            elif ServerStartFlag == True and ServerEndFlag == True \
+                and LocationEndFlag == True and LocationStartFlag == False\
+                and re.match(r'^ *location .*{', line):
+                LocationStartFlag = True
+                m = re.search(r'^ *location +(.*) {', line)
+                location_name = m.group(1)
+            elif ServerStartFlag == True and ServerEndFlag == True \
+                and LocationEndFlag == True and LocationStartFlag == True:
+                if re.match(r'^ *proxy_pass *http://.*;', line):
+                    m = re.search(r'^ *proxy_pass *http://(.*);', line)
+                    backend_name = m.group(1)
+                    backend_name = backend_name[:-1] if backend_name[-1] == '/' else backend_name
+                    try:
+                        backend_name = [x for x in UpstreamListDict if backend_name \
+                                == x['upstream_name']][0]['upstream_servers']
+                    except:
+                        pass
+                elif re.match(r'^ *root .*;', line):
+                    m = re.search(r'^ *root +(.*);', line)
+                    backend_name = m.group(1)
+                elif re.match(r'^ *rewrite .*;', line):
+                    m = re.search(r'^ *rewrite +(.*);', line)
+                    backend_name = m.group(1)
+                elif re.match(r'^ *}', line):
+                    LocationStartFlag, LocationEndFlag = False, True
+                    ServerListDict.append({
+                        "server_name": server_name,
+                        "location_name": location_name,
+                        "backend_name": backend_name
+                        })
+            elif ServerStartFlag == True and ServerEndFlag == True \
+                and LocationEndFlag == True and LocationStartFlag == False\
                 and re.match(r'^ *}', line):
                 LocationEndFlag = True
-            elif ServerStartFlag == True and ServerEndFlag == False \
-                and LocationEndFlag == True and re.match(r'^ *}', line):
-                ServerEndFlag == True
-                print(line, end='')
-
+                ServerStartFlag, ServerEndFlag, LocationStartFlag, \
+                    LocationEndFlag = False, True, False, True
+    from pprint import pprint
+    pprint(ServerListDict)
 
 if __name__ == '__main__':
-    NginxParse()
     pass
