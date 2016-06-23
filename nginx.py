@@ -22,7 +22,6 @@ def NginxParse(s='lapp/nginx/file/site-enable_dir/'):
     ServerStartFlag, ServerEndFlag, LocationStartFlag, LocationEndFlag = False, True, False, True
     server_name, location_name, backend_name = '', '', ''
     for nginx_file in [x for x in os.listdir(s) if os.path.isfile(os.path.join(s, x))]:
-    # for nginx_file in ['bbs.91syt.com.conf']:
         for line in open(os.path.join(s, nginx_file), 'r').readlines():
             if re.match(r'^ *#.*', line):       # Ignore comment line
                 continue
