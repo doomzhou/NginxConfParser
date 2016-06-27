@@ -36,7 +36,6 @@ def logparser(logpath):
         time_local = datetime.strptime((FirstSplitList0[-2]),
             '[%d/%b/%Y:%H:%M:%S')
         request = FirstSplitList[3]
-        print(FirstSplitList4)
         [status, bytes_sent] = FirstSplitList4
         host = FirstSplitList[1]
         http_user_agent = FirstSplitList[7]
