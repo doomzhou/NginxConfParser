@@ -23,28 +23,27 @@ request_time, remote_addr, http_referer, time_local, request, bytes_sent, \
 status, http_user_agent, host ='', '', '', '', '', '', '', '', ''
 
 def logparser(logpath):
-    with open(logpath, 'r') as f:
-        lines = f.readlines()
-    # handle the line of log
     result = []
-    for line in lines:
-        FirstSplitList = line.split('"')
-        http_referer = FirstSplitList[5]
-        FirstSplitList0 = FirstSplitList[0].split()
-        FirstSplitList4 = FirstSplitList[4].split()
-        request_time = FirstSplitList0[0]
-        time_local = datetime.strptime((FirstSplitList0[-2]),
-            '[%d/%b/%Y:%H:%M:%S')
-        request = FirstSplitList[3]
-        [status, bytes_sent] = FirstSplitList4
-        host = FirstSplitList[1]
-        http_user_agent = FirstSplitList[7]
-        if FirstSplitList[0].find(',') == -1:
-            remote_addr = FirstSplitList0[2]
-        else:
-            remote_addr = FirstSplitList0[3]
-        result.append([request_time, remote_addr, http_referer, time_local,
-                request, bytes_sent, status, http_user_agent, host])
+    with open(logpath, 'r') as f:
+    # handle the line of log
+        for line in f:
+            FirstSplitList = line.split('"')
+            http_referer = FirstSplitList[5]
+            FirstSplitList0 = FirstSplitList[0].split()
+            FirstSplitList4 = FirstSplitList[4].split()
+            request_time = FirstSplitList0[0]
+            time_local = datetime.strptime((FirstSplitList0[-2]),
+                '[%d/%b/%Y:%H:%M:%S')
+            request = FirstSplitList[3]
+            [status, bytes_sent] = FirstSplitList4
+            host = FirstSplitList[1]
+            http_user_agent = FirstSplitList[7]
+            if FirstSplitList[0].find(',') == -1:
+                remote_addr = FirstSplitList0[2]
+            else:
+                remote_addr = FirstSplitList0[3]
+            result.append([request_time, remote_addr, http_referer, time_local,
+                    request, bytes_sent, status, http_user_agent, host])
     return result
 
 
